@@ -22,8 +22,17 @@ if (config.warmupCkpt) {
 }
 
 const RequestSchema = z.object({
-  prompt: z.string().describe("The positive prompt for image generation"),
-  negative_prompt: z.string().optional().default("").describe("The negative prompt for image generation"),
+  prompt: z
+    .string()
+    .describe("The positive prompt for image generation"),
+  batch_size: z
+    .number()
+    .int()
+    .min(1)
+    .max(8)
+    .optional()
+    .default(1)
+    .describe("Batch size"),
   width: z
     .number()
     .int()
@@ -52,7 +61,7 @@ const RequestSchema = z.object({
     .min(1)
     .max(100)
     .optional()
-    .default(1)
+    .default(5)
     .describe("Number of sampling steps"),
   cfg_scale: z
     .number()
@@ -61,6 +70,13 @@ const RequestSchema = z.object({
     .optional()
     .default(1)
     .describe("Classifier-free guidance scale"),
+  guidance: z
+    .number()
+    .min(0)
+    .max(20)
+    .optional()
+    .default(4)
+    .describe("Flux guidance scale"),
   sampler_name: config.samplers
     .optional()
     .default("euler")
@@ -76,33 +92,6 @@ const RequestSchema = z.object({
     .optional()
     .default(1)
     .describe("Denoising strength"),
-  guidance: z
-    .number()
-    .min(0)
-    .max(10)
-    .optional()
-    .default(4)
-    .describe("Guidance scale for FluxGuidance"),
-  unet_name: z
-    .string()
-    .optional()
-    .default("flux1-schnell-Q4_K_S.gguf")
-    .describe("Name of the UNET model to use"),
-  clip_name1: z
-    .string()
-    .optional()
-    .default("t5xxl_fp8_e4m3fn.safetensors")
-    .describe("Name of the first CLIP model"),
-  clip_name2: z
-    .string()
-    .optional()
-    .default("clip_l.safetensors")
-    .describe("Name of the second CLIP model"),
-  vae_name: z
-    .string()
-    .optional()
-    .default("ae.safetensors")
-    .describe("Name of the VAE model"),
 });
 
 type InputType = z.infer<typeof RequestSchema>;
@@ -112,42 +101,32 @@ function generateWorkflow(input: InputType): Record<string, ComfyNode> {
     "6": {
       inputs: {
         text: input.prompt,
-        clip: ["34", 0],
+        clip: ["36", 0]
       },
       class_type: "CLIPTextEncode",
       _meta: {
-        title: "CLIP Text Encode (Prompt)",
-      },
+        title: "CLIP Text Encode (Prompt)"
+      }
     },
     "8": {
       inputs: {
         samples: ["29", 0],
-        vae: ["35", 0],
+        vae: ["35", 0]
       },
       class_type: "VAEDecode",
       _meta: {
-        title: "VAE Decode",
-      },
-    },
-    "9": {
-      inputs: {
-        filename_prefix: "FLUX/FLUX_GGUF_Q4",
-        images: ["8", 0],
-      },
-      class_type: "SaveImage",
-      _meta: {
-        title: "Save Image",
-      },
+        title: "VAE Decode"
+      }
     },
     "26": {
       inputs: {
         guidance: input.guidance,
-        conditioning: ["6", 0],
+        conditioning: ["6", 0]
       },
       class_type: "FluxGuidance",
       _meta: {
-        title: "FluxGuidance",
-      },
+        title: "FluxGuidance"
+      }
     },
     "29": {
       inputs: {
@@ -160,63 +139,74 @@ function generateWorkflow(input: InputType): Record<string, ComfyNode> {
         model: ["33", 0],
         positive: ["26", 0],
         negative: ["31", 0],
-        latent_image: ["32", 0],
+        latent_image: ["32", 0]
       },
       class_type: "KSampler",
       _meta: {
-        title: "KSampler",
-      },
+        title: "KSampler"
+      }
     },
     "31": {
       inputs: {
-        text: input.negative_prompt,
-        clip: ["34", 0],
+        text: "",
+        clip: ["36", 0]
       },
       class_type: "CLIPTextEncode",
       _meta: {
-        title: "CLIP Text Encode (Prompt)",
-      },
+        title: "CLIP Text Encode (Prompt)"
+      }
     },
     "32": {
       inputs: {
         width: input.width,
         height: input.height,
-        batch_size: 1,
+        batch_size: input.batch_size
       },
       class_type: "EmptyLatentImage",
       _meta: {
-        title: "Empty Latent Image",
-      },
+        title: "Empty Latent Image"
+      }
     },
     "33": {
       inputs: {
-        unet_name: input.unet_name,
+        unet_name: "flux1-schnell-Q4_K_S.gguf"
       },
       class_type: "UnetLoaderGGUF",
       _meta: {
-        title: "Unet Loader (GGUF)",
-      },
-    },
-    "34": {
-      inputs: {
-        clip_name1: input.clip_name1,
-        clip_name2: input.clip_name2,
-        type: "flux",
-      },
-      class_type: "DualCLIPLoader",
-      _meta: {
-        title: "DualCLIPLoader",
-      },
+        title: "Unet Loader (GGUF)"
+      }
     },
     "35": {
       inputs: {
-        vae_name: input.vae_name,
+        vae_name: "ae.safetensors"
       },
       class_type: "VAELoader",
       _meta: {
-        title: "Load VAE",
-      },
+        title: "Load VAE"
+      }
     },
+    "36": {
+      inputs: {
+        clip_name1: "t5xxl_fp8_e4m3fn.safetensors",
+        clip_name2: "clip_l.safetensors",
+        type: "flux"
+      },
+      class_type: "DualCLIPLoaderGGUF",
+      _meta: {
+        title: "DualCLIPLoader (GGUF)"
+      }
+    },
+    "40": {
+      inputs: {
+        filename_prefix: "genart",
+        file_type: "WEBP (lossy)",
+        images: ["8", 0]
+      },
+      class_type: "SaveImageExtended",
+      _meta: {
+        title: "Save Image (Extended)"
+      }
+    }
   };
 }
 

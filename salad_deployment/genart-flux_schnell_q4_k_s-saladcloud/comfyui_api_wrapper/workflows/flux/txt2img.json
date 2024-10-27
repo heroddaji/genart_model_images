@@ -1,9 +1,9 @@
 {
   "6": {
     "inputs": {
-      "text": "An illustrated solo traveler standing at the edge of a cliff with eagle soaring overhead. There are majestic mountains in the dawn horizon and the design has a papercraft, quilling style in purple, indigo, and gold colors. ",
+      "text": "fairy tale beautiful sorceress, mythp0rt, . magical, fantastical, enchanting, storybook style, highly detailed",
       "clip": [
-        "34",
+        "36",
         0
       ]
     },
@@ -28,19 +28,6 @@
       "title": "VAE Decode"
     }
   },
-  "9": {
-    "inputs": {
-      "filename_prefix": "FLUX/FLUX_GGUF_Q4",
-      "images": [
-        "8",
-        0
-      ]
-    },
-    "class_type": "SaveImage",
-    "_meta": {
-      "title": "Save Image"
-    }
-  },
   "26": {
     "inputs": {
       "guidance": 4,
@@ -56,8 +43,8 @@
   },
   "29": {
     "inputs": {
-      "seed": 1,
-      "steps": 1,
+      "seed": 1025993876710987,
+      "steps": 5,
       "cfg": 1,
       "sampler_name": "euler",
       "scheduler": "beta",
@@ -88,7 +75,7 @@
     "inputs": {
       "text": "",
       "clip": [
-        "34",
+        "36",
         0
       ]
     },
@@ -117,17 +104,6 @@
       "title": "Unet Loader (GGUF)"
     }
   },
-  "34": {
-    "inputs": {
-      "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
-      "clip_name2": "clip_l.safetensors",
-      "type": "flux"
-    },
-    "class_type": "DualCLIPLoader",
-    "_meta": {
-      "title": "DualCLIPLoader"
-    }
-  },
   "35": {
     "inputs": {
       "vae_name": "ae.safetensors"
@@ -135,6 +111,31 @@
     "class_type": "VAELoader",
     "_meta": {
       "title": "Load VAE"
+    }
+  },
+  "36": {
+    "inputs": {
+      "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux"
+    },
+    "class_type": "DualCLIPLoaderGGUF",
+    "_meta": {
+      "title": "DualCLIPLoader (GGUF)"
+    }
+  },
+  "40": {
+    "inputs": {
+      "filename_prefix": "genart",
+      "file_type": "WEBP (lossy)",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImageExtended",
+    "_meta": {
+      "title": "Save Image (Extended)"
     }
   }
 }
