@@ -1,6 +1,7 @@
 import requests
 import base64
 import json
+import random
 
 def test_txt2img_service(
     prompt="fairy tale beautiful sorceress, mythp0rt, . magical, fantastical, enchanting, storybook style, highly detailed",
@@ -43,7 +44,7 @@ def test_txt2img_service(
         
         # Save each image with a unique filename
         for i, image_data in enumerate(images_data):
-            filename = f'image_{i+1}.png'
+            filename = f'image_{random.randint(1000, 9999)}.png'
             with open(filename, 'wb') as f:
                 f.write(base64.b64decode(image_data))
             print(f"Image successfully saved as '{filename}'")
@@ -53,6 +54,6 @@ def test_txt2img_service(
 
 if __name__ == "__main__":
     test_txt2img_service(
-        batch_size=1,
-        steps=1
+        batch_size=4,
+        steps=5
     )
