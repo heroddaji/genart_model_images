@@ -19,7 +19,7 @@ interface Workflow {
 const RequestSchema = z.object({
   image: z.string().describe("Path or filename of the input image to upscale"),
   upscale_model: z
-    .enum(["RealESRGAN_x2.pth","RealESRGAN_x4.pth","RealESRGAN_x8.pth"])
+    .enum(["RealESRGAN_x2.pth","RealESRGAN_x4.pth"])
     .default("RealESRGAN_x2.pth")
     .describe("The upscaling model to use")
 });

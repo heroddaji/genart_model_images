@@ -35,7 +35,6 @@ COPY models/clip_l.safetensors ${CLIP_DIR}/
 COPY models/t5xxl_fp8_e4m3fn.safetensors ${CLIP_DIR}/
 COPY models/RealESRGAN_x2.pth ${UPSCALE_DIR}/
 COPY models/RealESRGAN_x4.pth ${UPSCALE_DIR}/
-COPY models/RealESRGAN_x8.pth ${UPSCALE_DIR}/
 
 # Install the GGUF node
 RUN git clone https://github.com/city96/ComfyUI-GGUF ${CUSTOM_NODES_DIR}/ComfyUI-GGUF

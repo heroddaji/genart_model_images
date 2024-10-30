@@ -16,29 +16,14 @@ interface Workflow {
   summary?: string;
 }
 
-let checkpoint: any = config.models.checkpoints.enum.optional();
-if (config.warmupCkpt) {
-  checkpoint = checkpoint.default(config.warmupCkpt);
-}
-
 const RequestSchema = z.object({
-  prompt: z.string().describe("The positive prompt for image generation"),
-  width: z
-    .number()
-    .int()
-    .min(256)
-    .max(2048)
-    .optional()
-    .default(1024)
-    .describe("Width of the generated image"),
-  height: z
-    .number()
-    .int()
-    .min(256)
-    .max(2048)
-    .optional()
-    .default(1024)
-    .describe("Height of the generated image"),
+  prompt: z
+    .string()    
+    .default("Bubble Bobble style. 8-bit, cute, pixelated, fantasy, vibrant, reminiscent of Bubble Bobble game")
+    .describe("The positive prompt for image generation"),
+  image: z
+    .string()
+    .describe("Base64 encoded image or path to image file"),
   seed: z
     .number()
     .int()
@@ -51,53 +36,15 @@ const RequestSchema = z.object({
     .min(1)
     .max(100)
     .optional()
-    .default(4)
+    .default(20)
     .describe("Number of sampling steps"),
-  cfg_scale: z
-    .number()
-    .min(0)
-    .max(20)
-    .optional()
-    .default(1)
-    .describe("Classifier-free guidance scale"),
-  sampler_name: config.samplers
-    .optional()
-    .default("euler")
-    .describe("Name of the sampler to use"),
-  scheduler: config.schedulers
-    .optional()
-    .default("simple")
-    .describe("Type of scheduler to use"),
   denoise: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .default(0.8)
+    .default(0.75)
     .describe("Denoising strength"),
-  checkpoint,
-  image: z.string().describe("Input image for img2img"),
-  interpolation: z
-    .enum(["nearest"])
-    .optional()
-    .default("nearest")
-    .describe("Interpolation method for image resizing"),
-  resize_method: z
-    .enum(["fill / crop"])
-    .optional()
-    .default("fill / crop")
-    .describe("Method for resizing the image"),
-  resize_condition: z
-    .enum(["always"])
-    .optional()
-    .default("always")
-    .describe("Condition for when to resize the image"),
-  multiple_of: z
-    .number()
-    .int()
-    .optional()
-    .default(8)
-    .describe("Ensure image dimensions are multiples of this value"),
 });
 
 type InputType = z.infer<typeof RequestSchema>;
@@ -107,71 +54,97 @@ function generateWorkflow(input: InputType): Record<string, ComfyNode> {
     "6": {
       inputs: {
         text: input.prompt,
-        clip: ["30", 1],
+        clip: ["11", 0],
       },
       class_type: "CLIPTextEncode",
       _meta: {
-        title: "CLIP Text Encode (Positive Prompt)",
+        title: "CLIP Text Encode (Prompt)",
       },
     },
     "8": {
       inputs: {
-        samples: ["31", 0],
-        vae: ["30", 2],
+        samples: ["13", 0],
+        vae: ["10", 0],
       },
       class_type: "VAEDecode",
       _meta: {
         title: "VAE Decode",
       },
     },
-    "9": {
+    "10": {
       inputs: {
-        filename_prefix: "ComfyUI",
-        images: ["8", 0],
+        vae_name: "ae.safetensors",
       },
-      class_type: "SaveImage",
+      class_type: "VAELoader",
       _meta: {
-        title: "Save Image",
+        title: "Load VAE",
       },
     },
-    "30": {
+    "11": {
       inputs: {
-        ckpt_name: input.checkpoint,
+        clip_name1: "t5xxl_fp8_e4m3fn.safetensors",
+        clip_name2: "clip_l.safetensors",
+        type: "flux",
       },
-      class_type: "CheckpointLoaderSimple",
+      class_type: "DualCLIPLoader",
       _meta: {
-        title: "Load Checkpoint",
+        title: "DualCLIPLoader",
       },
     },
-    "31": {
+    "13": {
       inputs: {
-        seed: input.seed,
+        noise: ["25", 0],
+        guider: ["22", 0],
+        sampler: ["16", 0],
+        sigmas: ["17", 0],
+        latent_image: ["30", 0],
+      },
+      class_type: "SamplerCustomAdvanced",
+      _meta: {
+        title: "SamplerCustomAdvanced",
+      },
+    },
+    "16": {
+      inputs: {
+        sampler_name: "ipndm",
+      },
+      class_type: "KSamplerSelect",
+      _meta: {
+        title: "KSamplerSelect",
+      },
+    },
+    "17": {
+      inputs: {
+        scheduler: "beta",
         steps: input.steps,
-        cfg: input.cfg_scale,
-        sampler_name: input.sampler_name,
-        scheduler: input.scheduler,
         denoise: input.denoise,
-        model: ["30", 0],
-        positive: ["6", 0],
-        negative: ["33", 0],
-        latent_image: ["38", 0],
+        model: ["31", 0],
       },
-      class_type: "KSampler",
+      class_type: "BasicScheduler",
       _meta: {
-        title: "KSampler",
+        title: "BasicScheduler",
       },
     },
-    "33": {
+    "22": {
       inputs: {
-        text: "",
-        clip: ["30", 1],
+        model: ["31", 0],
+        conditioning: ["6", 0],
       },
-      class_type: "CLIPTextEncode",
+      class_type: "BasicGuider",
       _meta: {
-        title: "CLIP Text Encode (Negative Prompt)",
+        title: "BasicGuider",
       },
     },
-    "37": {
+    "25": {
+      inputs: {
+        noise_seed: input.seed,
+      },
+      class_type: "RandomNoise",
+      _meta: {
+        title: "RandomNoise",
+      },
+    },
+    "26": {
       inputs: {
         image: input.image,
         upload: "image",
@@ -181,29 +154,48 @@ function generateWorkflow(input: InputType): Record<string, ComfyNode> {
         title: "Load Image",
       },
     },
-    "38": {
+    "29": {
       inputs: {
-        pixels: ["40", 0],
-        vae: ["30", 2],
+        upscale_method: "lanczos",
+        megapixels: 1,
+        image: ["26", 0],
+      },
+      class_type: "ImageScaleToTotalPixels",
+      _meta: {
+        title: "ImageScaleToTotalPixels",
+      },
+    },
+    "30": {
+      inputs: {
+        pixels: ["29", 0],
+        vae: ["10", 0],
       },
       class_type: "VAEEncode",
       _meta: {
         title: "VAE Encode",
       },
     },
-    "40": {
+    "31": {
       inputs: {
-        width: input.width,
-        height: input.height,
-        interpolation: input.interpolation,
-        method: input.resize_method,
-        condition: input.resize_condition,
-        multiple_of: input.multiple_of,
-        image: ["37", 0],
+        unet_name: "flux1-schnell-Q4_K_S.gguf",
+        dequant_dtype: "default",
+        patch_dtype: "default",
+        patch_on_device: false,
       },
-      class_type: "ImageResize+",
+      class_type: "UnetLoaderGGUFAdvanced",
       _meta: {
-        title: "🔧 Image Resize",
+        title: "Unet Loader (GGUF/Advanced)",
+      },
+    },
+    "33": {
+      inputs: {
+        filename_prefix: "ComfyUI",
+        file_type: "WEBP (lossy)",
+        images: ["8", 0],
+      },
+      class_type: "SaveImageExtended",
+      _meta: {
+        title: "Save Image (Extended)",
       },
     },
   };
@@ -212,8 +204,6 @@ function generateWorkflow(input: InputType): Record<string, ComfyNode> {
 const workflow: Workflow = {
   RequestSchema,
   generateWorkflow,
-  summary: "Image to Image",
-  description: "Generate an image from another image and a text prompt",
 };
 
 export default workflow;
