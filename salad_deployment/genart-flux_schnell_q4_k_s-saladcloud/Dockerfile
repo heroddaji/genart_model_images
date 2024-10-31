@@ -47,16 +47,16 @@ RUN git clone https://github.com/palant/extended-saveimage-comfyui ${CUSTOM_NODE
 # We also need to copy the comfyui-api binary into the image, since ComfyUI
 # is fully asyncronous by default, and has no convenient way to retrieve 
 # generated images. If you're adding a custom worker, you'll need to copy it in here.
-COPY comfyui_api_wrapper/bin/comfyui-api .
+COPY comfyui_api_workflows/bin/comfyui-api .
 RUN chmod +x comfyui-api
 
 # The comfyui wrapper api supports a warmup mode, where it will run a provided workflow before starting the server.
-COPY comfyui_api_wrapper/warmup_workflow_api.json .
+COPY comfyui_api_workflows/warmup_workflow_api.json .
 ENV WARMUP_PROMPT_FILE=warmup_workflow_api.json
 
 # We can add custom endpoints to the comfyui wrapper by poulating a workflows directory.
 ENV WORKFLOW_DIR=/workflows
-COPY comfyui_api_wrapper/workflows ${WORKFLOW_DIR}
+COPY comfyui_api_workflows/workflows ${WORKFLOW_DIR}
 
 COPY comfyui_code_patch/server.py ${COMFYUI_DIR}/
 
