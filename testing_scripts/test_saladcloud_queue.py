@@ -199,7 +199,7 @@ def test_local_queue(base_url, output_dir, use_salad_queue_api, repeat, test_ima
     else:
         print(f"Some tests failed count: {count_images}/{total_tests}")
 
-def create_salad_queue_jobs(test_image, repeat=1):
+def create_salad_queue_jobs(test_image, output_dir, repeat=1):
     print("Testing SaladCloud queue...")
     job_ids = []
 
@@ -215,6 +215,10 @@ def create_salad_queue_jobs(test_image, repeat=1):
             job_id = response.json()["id"]
             print(f"Job ID: {job_id}")
             job_ids.append(job_id)
+
+            #save queue output of jobID
+            with open(os.path.join(output_dir, f"{job_id}.json"), 'w') as f:
+                json.dump(response.json(), f, indent=4)
     
     return job_ids
 
@@ -239,12 +243,21 @@ def get_salad_queue_output(job_ids, output_dir, repeat):
             url = f"https://api.salad.com/api/public/organizations/{organization}/projects/{project}/queues/{queue}/jobs/{job_id}"
             get_job_output_response = requests.get(url, headers=headers)
             if get_job_output_response.json()["status"] != "succeeded":
+                #save queue output of jobID that is not succeeded yet
+                with open(os.path.join(output_dir, f"{job_id}_waiting.json"), 'w') as f:
+                    json.dump(get_job_output_response.json(), f, indent=4)
+
                 print(f"job {job_id} not succeeded")
                 continue
 
             if get_job_output_response.status_code == 200:
                 os.makedirs(output_dir, exist_ok=True)
                 result = get_job_output_response.json()["output"]
+                
+                #save json output success with images
+                with open(os.path.join(output_dir, f"{job_id}_success.json"), 'w') as f:
+                    json.dump(get_job_output_response.json(), f, indent=4)
+
                 # Save images
                 for i, img_base64 in enumerate(result.get('images', [])):
                     img_data = base64.b64decode(img_base64)
@@ -270,7 +283,8 @@ def get_salad_queue_output(job_ids, output_dir, repeat):
 
 def main():
     print("Starting API tests...")
-    # test_local_queue(
+    ############ test local docker
+    #  test_local_queue(
     #     base_url="http://127.0.0.1:3000",
     #     # url="http://127.0.0.1:3000",
     #     output_dir=f"output_{random.randint(0, 1000)}",
@@ -279,11 +293,16 @@ def main():
     #     test_image="sample_image.webp"
     # )
 
+
+
+    ########### test online salad queue
+    #create output directory
     output_dir = f"output_saladqueue_{random.randint(0, 1000)}"
-    # test_image = "sample_image.webp"
-    test_image = "output_saladqueue_913/img_1730354815_2.png"
+    os.makedirs(output_dir, exist_ok=True)
+
+    test_image = "sample_image.webp"
     repeat = 2
-    job_ids = create_salad_queue_jobs(test_image=test_image, repeat=repeat)
+    job_ids = create_salad_queue_jobs(test_image=test_image, output_dir=output_dir, repeat=repeat)
     get_salad_queue_output(job_ids, output_dir=output_dir, repeat=repeat)
 
     
