@@ -60,4 +60,9 @@ COPY comfyui_api_workflows/workflows ${WORKFLOW_DIR}
 
 COPY comfyui_code_patch/server.py ${COMFYUI_DIR}/
 
-CMD ["./comfyui-api"]
+# Copy salad job queue worker
+COPY salad_job_queue/salad-http-job-queue-worker-v041 ./salad-http-job-queue-worker
+
+# starting script
+COPY --chmod=755 ./main.sh ./
+CMD ["./main.sh"]
