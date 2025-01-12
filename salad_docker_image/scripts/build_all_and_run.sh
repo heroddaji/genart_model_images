@@ -1,8 +1,11 @@
+#!/bin/bash
+
 docker stop $(docker ps -a -q)
 docker rm $(docker ps -a -q)
 
-cd ../../comfyui-api
+cd ../comfyui-api
 ./build.sh
+cp -r ./bin/comfyui-api ../genart-flux_schnell_q4_k_s-saladcloud/comfyui_api_workflows/bin/
 
 cd ../genart-flux_schnell_q4_k_s-saladcloud/build_scripts
 ./build.sh
