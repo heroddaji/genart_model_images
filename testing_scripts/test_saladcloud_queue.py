@@ -28,19 +28,19 @@ def generate_salad_queue_payloads(test_image):
                 }
             }
         }, 
-        # "txt2img": {
-        #     "input": {
-        #         "workflowRoute": "/workflow/flux/txt2img",
-        #         "workflowInput": {
-        #             "input": {                        
-        #                 # "prompt": "modern beautiful sorceress, mythp0rt, magical, fantastical, enchanting, storybook style, highly detailed",
-        #                 "prompt": "cute dog running in the park, highly detailed",
-        #                 "batch_size": 4,
-        #                 "steps": 5
-        #             }
-        #         }
-        #     }
-        # }, 
+        "txt2img": {
+            "input": {
+                "workflowRoute": "/workflow/flux/txt2img",
+                "workflowInput": {
+                    "input": {                        
+                        # "prompt": "modern beautiful sorceress, mythp0rt, magical, fantastical, enchanting, storybook style, highly detailed",
+                        "prompt": "cute dog running in the park, highly detailed",
+                        "batch_size": 4,
+                        "steps": 5
+                    }
+                }
+            }
+        }, 
         "img2img": {
             "input": {
                 "workflowRoute": "/workflow/flux/img2img",

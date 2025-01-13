@@ -1,3 +1,5 @@
 #!/bin/bash
 
-docker build -t heroddaji/genart-flux_schnell_q4_k_s-saladcloud:1.0.1 ../   
+GENART_DOCKER_IMAGE_VERSION=1.0.2
+export GENART_DOCKER_IMAGE_VERSION
+docker build -t heroddaji/genart-flux_schnell_q4_k_s-saladcloud:$GENART_DOCKER_IMAGE_VERSION ../   
