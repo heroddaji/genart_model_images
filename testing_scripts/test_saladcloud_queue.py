@@ -25,7 +25,8 @@ def generate_salad_queue_payloads(test_image):
                         "image": img_base64,
                         "upscale_model": upscale_model[random.randint(0, 1)]
                     }
-                }
+                },
+                "api_version": 1
             }
         }, 
         "txt2img": {
@@ -38,7 +39,8 @@ def generate_salad_queue_payloads(test_image):
                         "batch_size": 4,
                         "steps": 5
                     }
-                }
+                },
+                "api_version": 1
             }
         }, 
         "img2img": {
@@ -49,7 +51,8 @@ def generate_salad_queue_payloads(test_image):
                         "image": img_base64,
                         "prompt": "a robot dog with eyes shoot our lazer beam, in a cyber punk environment"
                     }
-                }
+                },
+                "api_version": 1
             }
         }, 
     }
