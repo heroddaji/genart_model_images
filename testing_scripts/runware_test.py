@@ -2,16 +2,62 @@ import requests
 import base64
 import uuid  
 
+def flux_redux(url, image_path):
+    try:
+        with open(image_path, "rb") as image_file:
+            image_data = base64.b64encode(image_file.read()).decode('utf-8')
+            
+        payload = [
+            {
+                "taskType": "authentication",
+                "apiKey": "z2bMgI9UMgVSlQ9SArKwCTHWkrfisUbu"
+            },
+            {
+                "taskType": "imageInference",
+                "taskUUID": str(uuid.uuid4()),
+                "model": "runware:101@1",
+                "positivePrompt": "cute cat in a  bottle",
+                "includeCost": True,
+                "seedImage": str('data:image/png;base64,'+image_data),
+                "strength": 0.76,
+                #"CFGScale": 25,
+                "width": 768,
+                "height": 1024,
+                "steps": 1,
+                "scheduler":"DPM++ 2M",
+                "ipAdapters": [
+                    {
+                        "guideImage": "https://raw.githubusercontent.com/heroddaji/genart_production_data/refs/heads/main/testing_images/asiangirl.jpg",                    
+                        "model": "runware:105@1",
+                        # "weight": 0.7
+                    }
+                ]
+            }
+        ]
+        
+        print(payload)
+        headers = {
+            "Content-Type": "application/json"
+        }
+        
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()  # Raise an error for bad status codes
+        print(response.json())  # Assuming the response is in JSON format
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+
+
+
 def send_img2img_request(url, image_path):
     try:
         with open(image_path, "rb") as image_file:
             image_data = base64.b64encode(image_file.read()).decode('utf-8')
         
         payload = [
-             {
-                        "taskType": "authentication",
-                        "apiKey": "z2bMgI9UMgVSlQ9SArKwCTHWkrfisUbu"
-                    },
+            {
+                "taskType": "authentication",
+                "apiKey": "z2bMgI9UMgVSlQ9SArKwCTHWkrfisUbu"
+            },
             {
                 "taskType": "imageInference",
                 "taskUUID": str(uuid.uuid4()),
@@ -20,7 +66,8 @@ def send_img2img_request(url, image_path):
                 # "CFGScale": 3,
                 "clipSkip": 0,
                 "positivePrompt": "Close-up shot of a young woman's face and upper torso (anime style:2). She has long, dark brown hair with a slight wave, parted to the side (anime style:2). Her skin is fair with a soft, almost airbrushed appearance (anime style:2). She is wearing makeup: peachy-orange eyeshadow, rosy pink blush high on her cheeks, and a matte coral-orange lipstick (anime style:2). Her eyes are brown and appear slightly enlarged, characteristic of anime style (anime style:2). A white earphone is visible in her right ear, with the wire extending down her chest (anime style:2). She's wearing a light pink or peach-colored blouse with slight ruching at the shoulder (anime style:2). The background is blurred, but shows hints of a green bus seat and a window with blurry trees outside (anime style:2). Focus on capturing the soft lighting and idealized features, typical of (anime style:2) a highly polished anime aesthetic. The perspective is slightly angled downwards. (anime style:2)",
-                "seedImage": "https://raw.githubusercontent.com/heroddaji/genart_production_data/refs/heads/main/testing_images/asiangirl.jpg",
+                # "seedImage": "https://raw.githubusercontent.com/heroddaji/genart_production_data/refs/heads/main/testing_images/asiangirl.jpg",
+                "seedImage": str('data:image/png;base64,'+image_data),
                 "model": "runware:100@1",
                 "height": 768,
                 "width": 768,
@@ -117,8 +164,10 @@ def send_scale_request(url, image_path):
 
 if __name__ == "__main__":
     api_url = "https://api.runware.ai/v1"  # Replace with your API URL
-    image_path = "sample_image.webp"
+    image_path = "testing_scripts/sample_image.webp"
+    image_path = "testing_scripts/anime1.png"
     # send_scale_request(api_url, image_path)  
     # send_background_removal_request(api_url, image_path) 
-    send_img2img_request(api_url, image_path) 
+    # send_img2img_request(api_url, image_path) 
+    flux_redux(api_url,image_path) 
     
