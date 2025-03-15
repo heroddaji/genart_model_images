@@ -2,10 +2,13 @@ import requests
 import base64
 import uuid  
 
-def flux_redux(url, image_path):
+def flux_redux(url, image_path, style_image_path):
     try:
         with open(image_path, "rb") as image_file:
             image_data = base64.b64encode(image_file.read()).decode('utf-8')
+
+        with open(style_image_path, "rb") as image_file:
+            style_image_data = base64.b64encode(image_file.read()).decode('utf-8')
             
         payload = [
             {
@@ -15,21 +18,28 @@ def flux_redux(url, image_path):
             {
                 "taskType": "imageInference",
                 "taskUUID": str(uuid.uuid4()),
-                "model": "runware:101@1",
+                "model": "rundiffusion:110@101",
                 "positivePrompt": "cute cat in a  bottle",
                 "includeCost": True,
-                "seedImage": str('data:image/png;base64,'+image_data),
-                "strength": 0.76,
-                #"CFGScale": 25,
-                "width": 768,
-                "height": 1024,
-                "steps": 1,
-                "scheduler":"DPM++ 2M",
+                # "seedImage": str('data:image/png;base64,'+image_data),
+                "strength": 0.8,
+                # "CFGScale": 15,
+                "width": 512,
+                "height": 768,
+                "steps": 8,
+                "numberResults": 2,
+                "scheduler":"FlowMatchEulerDiscreteScheduler",
+                # "lora": [
+                #     {
+                #         "model": "civitai:686704@768547",
+                #         "weight": 1
+                #     }
+                # ],
                 "ipAdapters": [
                     {
-                        "guideImage": "https://raw.githubusercontent.com/heroddaji/genart_production_data/refs/heads/main/testing_images/asiangirl.jpg",                    
+                        "guideImage":str('data:image/png;base64,'+style_image_data),            
                         "model": "runware:105@1",
-                        # "weight": 0.7
+                        # "weight": 0.99
                     }
                 ]
             }
@@ -164,10 +174,10 @@ def send_scale_request(url, image_path):
 
 if __name__ == "__main__":
     api_url = "https://api.runware.ai/v1"  # Replace with your API URL
-    image_path = "testing_scripts/sample_image.webp"
-    image_path = "testing_scripts/anime1.png"
+    image_path = "genart_00043_.webp"
+    style_image_path = "genart_00023_.webp"
     # send_scale_request(api_url, image_path)  
     # send_background_removal_request(api_url, image_path) 
     # send_img2img_request(api_url, image_path) 
-    flux_redux(api_url,image_path) 
+    flux_redux(api_url,image_path, style_image_path) 
     
